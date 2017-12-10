@@ -14,6 +14,8 @@ BATCH_SIZE = 64
 IMAGE_SIZE = 50
 NUM_CHANNELS = 1
 NUM_LABELS = 43
+LEARNING_RATE = 0.001
+MODEL_SAVE_FILENAME = './model/lenet.ckpt'
 
 def LeNet(x):    
     # Arguments used for tf.truncated_normal, randomly defines variables for the weights and biases for each layer
@@ -64,7 +66,7 @@ def LeNet(x):
     # Activation.
     fc1 = tf.nn.relu(fc1)
 
-    # Layer 4: Fully Connected. Input = 160. Output = 60.
+    # Layer 4: Fully Connected. Input = 160. Output = 80.
     fc2_W  = tf.Variable(tf.truncated_normal(shape=(160, 80), mean = mu, stddev = sigma))
     fc2_b  = tf.Variable(tf.zeros(80))
     fc2    = tf.matmul(fc1, fc2_W) + fc2_b
@@ -80,8 +82,6 @@ def LeNet(x):
     return logits
 
 def train():
-    rate = 0.001
-
 
     train_json_fn = './gtsrb_train.json'
     test_json_fn = './gtsrb_test.json'
@@ -91,6 +91,8 @@ def train():
     test_json_fn = './gtsrb_test.json'
     with open(test_json_fn, 'r') as fd:
         gtsrb_test_items = json.load(fd)
+
+    print len(gtsrb_train_items), len(gtsrb_test_items)
     # X_validation, y_validation = mnist.validation.images, mnist.validation.labels
 
     x = tf.placeholder(tf.float32, (None, IMAGE_SIZE, IMAGE_SIZE, 1), name='x-input')
@@ -99,7 +101,7 @@ def train():
     logits = LeNet(x)
     cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=one_hot_y, logits=logits)
     loss_operation = tf.reduce_mean(cross_entropy)
-    optimizer = tf.train.AdamOptimizer(learning_rate = rate)
+    optimizer = tf.train.AdamOptimizer(learning_rate = LEARNING_RATE)
     training_operation = optimizer.minimize(loss_operation)
 
     correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(one_hot_y, 1))
@@ -145,6 +147,7 @@ def train():
                 sess.run(training_operation, feed_dict={x: batch_x, y: batch_y})
                 # print offset, '/', num_examples
 
+            saver.save(sess, MODEL_SAVE_FILENAME, global_step=i)
             total_accuracy = 0
             for test_offset in range(0, test_examples, BATCH_SIZE):
                 batch_size = min(test_offset + BATCH_SIZE, test_examples-1) - test_offset
@@ -178,7 +181,7 @@ def train():
                 fd.writelines(total_error_sample)
             print()
             
-        saver.save(sess, './lenet')
+        saver.save(sess, './model')
         print("Model saved")
 
 def show_error_examples():
@@ -188,6 +191,7 @@ def show_error_examples():
         lines = fd.readlines()
     for line in lines:
         image_fn = line.replace('\r', '').replace('\n', '')
+        image_fn = './dataset/GTSRB/Final_Training/Images/00001/00033_00013.ppm'
         base, fn = os.path.split(image_fn)
         fn_list = os.listdir(base)
         label_fn = [f for f in fn_list if f.endswith('csv')][0]
@@ -204,18 +208,29 @@ def show_error_examples():
         gray = cv2.cvtColor(origin, cv2.COLOR_BGR2GRAY)
         roi = cv2.resize(gray[x1:x2, y1:y2], (IMAGE_SIZE, IMAGE_SIZE))
         image = cv2.resize(gray, (IMAGE_SIZE, IMAGE_SIZE))
-        image = cv2.equalizeHist(image)
+        hist = cv2.equalizeHist(image)
+        cv2.imwrite('./examples/hist.bmp', hist)
+        cv2.imwrite('./examples/gray.bmp', gray)
+        cv2.imwrite('./examples/origin.bmp', origin)
         cv2.imshow('origin', origin)
         cv2.imshow('gray', gray)
+        cv2.imshow('hist', hist)
         cv2.imshow('wrong', image)
         cv2.imshow('roi', roi)
+        for ii in range(200):
+            _x = int(random.uniform(0, IMAGE_SIZE))
+            _y = int(random.uniform(0, IMAGE_SIZE))
+            noisy_pix = int(random.uniform(0, 255))
+            image[_x, _y] = noisy_pix
+        cv2.imwrite('./examples/noisy.bmp', image)
+        cv2.imshow('noisy', image)
         cv2.waitKey(0)
 
     pass
 
 def main():
-    train()
-    # show_error_examples()
+    # train()
+    show_error_examples()
 
 if __name__ == '__main__':
     main()

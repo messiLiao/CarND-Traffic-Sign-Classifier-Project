@@ -29,8 +29,8 @@ The goals / steps of this project are the following:
 [image8]: ./examples/placeholder.png "Traffic Sign 5"
 [origin_image]: ./examples/origin.bmp "Origin image"
 [gray_image]: ./examples/gray.bmp "Gray image"
-[hist_image]: ./examples/hist.bmp "Traffic Sign 5"
-[noisy_image]: ./examples/noisy.bmp "Traffic Sign 5"
+[hist_image]: ./examples/hist.bmp "histogram equalization"
+[noisy_image]: ./examples/noisy.bmp "image with random noisy"
 
 ## Rubric Points
 ### Here I will consider the [rubric points](https://review.udacity.com/#!/rubrics/481/view) individually and describe how I addressed each point in my implementation.  
@@ -52,8 +52,9 @@ signs data set:
 * The size of training set is 35289
 * The size of the validation set is 3920
 * The size of test set is 0
-* The shape of a traffic sign image is 50*50
-* The number of unique classes/labels in the data set is ? 
+* The shape of a traffic sign image is 50x50
+* The number of unique classes/labels in the data set is  ?
+
 
 #### 2. Include an exploratory visualization of the dataset.
 
@@ -132,7 +133,7 @@ My final model consisted of the following layers:
 
 #### 3. Describe how you trained your model. The discussion can include the type of optimizer, the batch size, number of epochs and any hyperparameters such as learning rate.
 
-To train the model, I used an Adam Optimization method.
+To train the model, I used Adam optimization method. At start, I only resize the picture to 32x32, no nomalizing, no adding noisy, no equalization. The validation set accuracy was 0.15. And then adding the nomalized preprocessing. The validation set accuracy was rised to 0.92. Then I changed the input shape of Lenet model to 50x50. The accuracy was rised to 0.95. Then I analised the wrong classified samples and class, I found that image is too dark and noisy, so I added histogram equalization step and in the image preprocessing, and adding random noisy pixes after equalization. After this steps, accurary was raise to 0.990. The wrong samples is hard to classified by my eyes, so I stoped.
 
 #### 4. Describe the approach taken for finding a solution and getting the validation set accuracy to be at least 0.93. Include in the discussion the results on the training, validation and test sets and where in the code these were calculated. Your approach may have been an iterative process, in which case, outline the steps you took to get to the final solution and why you chose those steps. Perhaps your solution involved an already well known implementation or architecture. In this case, discuss why you think the architecture is suitable for the current problem.
 

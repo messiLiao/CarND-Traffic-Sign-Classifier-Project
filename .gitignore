@@ -1,4 +1,9 @@
 data
+*.index
+*.meta
+lenet.data-*
+model.data-*
+checkpoint
 model
 .ipynb_checkpoints
 *.h5

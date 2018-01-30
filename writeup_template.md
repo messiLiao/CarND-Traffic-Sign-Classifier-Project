@@ -4,7 +4,7 @@
 
 ### You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
 
----
+-------
 
 **Build a Traffic Sign Recognition Project**
 
@@ -49,11 +49,11 @@ You're reading it! and here is a link to my [project code](https://github.com/me
 I used the pandas library to calculate summary statistics of the traffic
 signs data set:
 
-* The size of training set is 35289
-* The size of the validation set is 3920
-* The size of test set is 0
-* The shape of a traffic sign image is 50x50
-* The number of unique classes/labels in the data set is  ?
+* The size of training set is 34749
+* The size of the validation set is 4410
+* The size of test set is 12630
+* The shape of a traffic sign image is 32x32x3
+* The number of unique classes/labels in the data set is  43
 
 
 #### 2. Include an exploratory visualization of the dataset.
@@ -76,12 +76,6 @@ image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 Here is an example of a traffic sign image before and after grayscaling.
 ![alt text][origin_image]
 ![alt text][gray_image]
-
-As a second step. I resize the images to 50x50.
-```python
-image = cv2.resize(image, (IMAGE_SIZE, IMAGE_SIZE))
-```
-
 
 
 As a third step, I normalized the image data because it was easy to convergence when train the model.

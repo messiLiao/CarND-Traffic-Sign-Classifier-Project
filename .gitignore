@@ -12,4 +12,3 @@ models
 *.p
 dataset
 *.pyc
-*.html

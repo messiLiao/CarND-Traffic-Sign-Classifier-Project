@@ -103,25 +103,22 @@ The difference between the original data set and the augmented data set is the f
 
 My final model consisted of the following layers:
 
-| Layer         		|     Description	        					| 
+|         Layer         |                   Description                 | 
 |:---------------------:|:---------------------------------------------:| 
-| Input         		| 50x50x1 GRAY Scale image   							| 
-| Convolution 3x3     	| 1x1 stride, VALID padding, outputs 46x46x6 	|
-| RELU					|						|
-| Max pooling	      	| 2x2 stride,  outputs 23x23x6 				|
-| Convolution 3x3	    | 1x1 stride, VALID padding, outputs 19x19x16  |
+| Input                 |          32x32x1 GRAY Scale image             | 
+| Convolution 3x3       | 5x5 kernel size, 1x1 stride, VALID padding    |
 | RELU                  |                                               |
-| Max pooling           | 2x2 stride,  SAME padding, outputs 10x10x16              |
-| Convolution 3x3       | 1x1 stride, VALID padding, outputs 5x5x32  |
+| Max pooling           |        2x2 stride,  VALID padding             |
+| Convolution 3x3       | 5x5 kernel size, 1x1 stride, VALID padding    |
 | RELU                  |                                               |
-| Max pooling           | 2x2 stride,  outputs 3x3x32              |
-| Fully connected       | Input 288, Output 160.         |
+| Max pooling           |        2x2 stride,  VALID padding             |
+| Fully connected       | Input 400, Output 120.                        |
 | RELU                  |                                               |
-| Fully connected		| Input 160, Output 80.       	|
+| Fully connected       | Input 120, Output 84.                         |
 | RELU                  |                                               |
-| Fully connected       | Input 80, Output 43.         |
+| Fully connected       | Input 84, Output 43.                          |
 | RELU                  |                                               |
-| Softmax				| Output 43.      				|							|
+| Softmax               | Output 43.                                    |
  
 
 
@@ -163,13 +160,13 @@ The first image might be difficult to classify because ...
 
 Here are the results of the prediction:
 
-| Image			        |     Prediction	        					| 
+| Image        |     Prediction        | 
 |:---------------------:|:---------------------------------------------:| 
-| Stop Sign      		| Stop sign   									| 
-| U-turn     			| U-turn 										|
-| Yield					| Yield											|
-| 100 km/h	      		| Bumpy Road					 				|
-| Slippery Road			| Slippery Road      							|
+| Stop Sign      | Stop sign   | 
+| U-turn     | U-turn |
+| Yield| Yield|
+| 100 km/h      | Bumpy Road |
+| Slippery Road| Slippery Road      |
 
 
 The model was able to correctly guess 4 of the 5 traffic signs, which gives an accuracy of 80%. This compares favorably to the accuracy on the test set of ...
@@ -180,13 +177,13 @@ The code for making predictions on my final model is located in the 11th cell of
 
 For the first image, the model is relatively sure that this is a stop sign (probability of 0.6), and the image does contain a stop sign. The top five soft max probabilities were
 
-| Probability         	|     Prediction	        					| 
+| Probability         |     Prediction        | 
 |:---------------------:|:---------------------------------------------:| 
-| .60         			| Stop sign   									| 
-| .20     				| U-turn 										|
-| .05					| Yield											|
-| .04	      			| Bumpy Road					 				|
-| .01				    | Slippery Road      							|
+| .60         | Stop sign   | 
+| .20     | U-turn |
+| .05| Yield|
+| .04      | Bumpy Road |
+| .01    | Slippery Road      |
 
 
 For the second image ... 

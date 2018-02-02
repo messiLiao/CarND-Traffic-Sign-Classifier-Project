@@ -12,8 +12,9 @@ import sklearn
 import tensorflow as tf
 from tensorflow.contrib.layers import flatten
 
-BATCH_SIZE = 500
-EPOCHS = 20
+BATCH_SIZE = 128
+EPOCHS = 50
+learning_rate = 0.001
 
 data_source = 'gtsrb'  # 'gtsrb' or mnist
 
@@ -31,47 +32,52 @@ def LeNet(x):
     sigma = 0.1
 
     # LAYER 1:
-    conv1_w = tf.Variable(tf.truncated_normal(shape=(5, 5, 1, 6), mean=mu, stddev=sigma))
-    conv1_b = tf.Variable(tf.zeros(6))
-    conv1   = tf.nn.conv2d(x, conv1_w, strides=[1, 1, 1, 1], padding='VALID') + conv1_b
+    with tf.variable_scope('layer-conv1'):
+        conv1_w = tf.Variable(tf.truncated_normal(shape=(5, 5, 1, 6), mean=mu, stddev=sigma), name='conv1_w')
+        conv1_b = tf.Variable(tf.zeros(6), name='conv1_b')
+        conv1   = tf.add(tf.nn.conv2d(x, conv1_w, strides=[1, 1, 1, 1], padding='VALID'), conv1_b, name='conv1')
 
-    conv1   = tf.nn.relu(conv1)
+        conv1   = tf.nn.relu(conv1, name='conv1-relu')
 
-    conv1   = tf.nn.max_pool(conv1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='VALID')
-    print conv1.shape
+        conv1   = tf.nn.max_pool(conv1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='VALID', name='conv1-maxpool')
+        print conv1.shape
 
 
     # LAYER 2:
-    conv2_w = tf.Variable(tf.truncated_normal(shape=(5, 5, 6, 16), mean=mu, stddev=sigma))
-    conv2_b = tf.Variable(tf.zeros(16))
-    conv2   = tf.nn.conv2d(conv1, conv2_w, strides=[1, 1, 1, 1], padding='VALID') + conv2_b
+    with tf.variable_scope('layer-conv2'):
+        conv2_w = tf.Variable(tf.truncated_normal(shape=(5, 5, 6, 16), mean=mu, stddev=sigma), name='conv2_w')
+        conv2_b = tf.Variable(tf.zeros(16), name='conv2_b')
+        conv2   = tf.add(tf.nn.conv2d(conv1, conv2_w, strides=[1, 1, 1, 1], padding='VALID'), conv2_b, name='conv2')
 
-    conv2   = tf.nn.relu(conv2)
+        conv2   = tf.nn.relu(conv2, name='conv2-relu')
 
-    conv2   = tf.nn.max_pool(conv2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='VALID')
-    print conv2.shape
+        conv2   = tf.nn.max_pool(conv2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='VALID', name='conv2-maxpool')
+        print conv2.shape
 
     # LAYER 3
     fc0     = flatten(conv2)
 
     # LAYER 4
-    fc1_w   = tf.Variable(tf.truncated_normal(shape=(400, 120), mean=mu, stddev=sigma))
-    fc1_b   = tf.Variable(tf.zeros(120))
-    fc1     = tf.matmul(fc0, fc1_w) + fc1_b
+    with tf.variable_scope('layer-fc1'):
+        fc1_w   = tf.Variable(tf.truncated_normal(shape=(400, 120), mean=mu, stddev=sigma), name='w')
+        fc1_b   = tf.Variable(tf.zeros(120), name='b')
+        fc1     = tf.add(tf.matmul(fc0, fc1_w), fc1_b, name='fc1')
 
-    fc1     = tf.nn.relu(fc1)
+        fc1     = tf.nn.relu(fc1, name='relu')
 
     # LAYER 5
-    fc2_w   = tf.Variable(tf.truncated_normal(shape=(120, 84), mean=mu, stddev=sigma))
-    fc2_b   = tf.Variable(tf.zeros(84))
-    fc2     = tf.matmul(fc1, fc2_w) + fc2_b
+    with tf.variable_scope('layer-fc2'):
+        fc2_w   = tf.Variable(tf.truncated_normal(shape=(120, 84), mean=mu, stddev=sigma), name='w')
+        fc2_b   = tf.Variable(tf.zeros(84), name='b')
+        fc2     = tf.add(tf.matmul(fc1, fc2_w), fc2_b, name='fc2')
 
-    fc2     = tf.nn.relu(fc2)
+        fc2     = tf.nn.relu(fc2, name='relu')
 
     # LAYER 6
-    fc3_w   = tf.Variable(tf.truncated_normal(shape=(84, n_classes), mean=mu, stddev=sigma))
-    fc3_b   = tf.Variable(tf.zeros(n_classes))
-    fc3     = tf.matmul(fc2, fc3_w) + fc3_b
+    with tf.variable_scope('layer-fc3'):
+        fc3_w   = tf.Variable(tf.truncated_normal(shape=(84, n_classes), mean=mu, stddev=sigma), name='w')
+        fc3_b   = tf.Variable(tf.zeros(n_classes), name='b')
+        fc3     = tf.add(tf.matmul(fc2, fc3_w), fc3_b, name='fc3')
 
     logits  = fc3
     return logits
@@ -163,23 +169,21 @@ print("Number of train samples:%d" % n_train)
 print("Number of test samples:%d" % n_test)
 print("number of validation samples:%d" % n_validation)
 
-x = tf.placeholder(tf.float32, (None, 32, 32, 1))
-y = tf.placeholder(tf.int32, (None))
-one_hot_y = tf.one_hot(y, n_classes)
+with tf.variable_scope('input'):
+    x = tf.placeholder(tf.float32, (None, 32, 32, 1), name='x')
+    y = tf.placeholder(tf.int32, (None), name='y')
+    one_hot_y = tf.one_hot(y, n_classes)
 
-rate = 0.001
 
 logits = LeNet(x)
 
-cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=tf.argmax(one_hot_y, 1))
-loss_operation = tf.reduce_mean(cross_entropy)
-optimizer = tf.train.AdamOptimizer(learning_rate=rate)
+cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=tf.argmax(one_hot_y, 1), name='cross_entropy')
+loss_operation = tf.reduce_mean(cross_entropy, name='loss_operation')
+optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
 train_operation = optimizer.minimize(loss_operation)
 
-tf.summary.scalar('mean', loss_operation)
-
-correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(one_hot_y, 1))
-accuracy_operation = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(one_hot_y, 1), name='correct_prediction')
+accuracy_operation = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name='accuracy_operation')
 
 def evaluate(X_data, y_data):
     num_examples = len(X_data)

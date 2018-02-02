@@ -22,13 +22,18 @@ The goals / steps of this project are the following:
 [image_train]: ./examples/hist_train.png "Visualization"
 [image_valid]: ./examples/hist_validation.png "Visualization"
 [image_test]: ./examples/hist_test.png "Visualization"
-[image2]: ./examples/grayscale.jpg "Grayscaling"
+[image2]: ./examples/traffic_sign_4_gray.png "Color image"
+[image2_gray]: ./examples/traffic_sign_4_gray.png "Grayscaling"
+[image2_hist]: ./examples/traffic_sign_4_hist.png "Histogram equalization"
 [image3]: ./examples/random_noise.jpg "Random Noise"
 [image4]: ./examples/traffic_sign_0.png "Traffic Sign 1"
 [image5]: ./examples/traffic_sign_1.png "Traffic Sign 2"
 [image6]: ./examples/traffic_sign_2.png "Traffic Sign 3"
 [image7]: ./examples/traffic_sign_3.png "Traffic Sign 4"
-[image8]: ./examples/traffic_sign_4.png "Traffic Sign 5"
+[image8]: ./examples/traffic_sign_5.png "Traffic Sign 5"
+[image_epoch_20]: ./examples/ValidationAccuracy_20.png "Validation Accuracy EPOCH=20"
+[image_epoch_200]: ./examples/ValidationAccuracy_200.png "Validation Accuracy EPOCH=200"
+[image_batch_size_64_128_512]: ./examples/ValidationAccuracy_bs_64_128_512.png "Validation Accuracy BATCH_SIZE=[64, 128, 512]"
 
 ## Rubric Points
 ### Here I will consider the [rubric points](https://review.udacity.com/#!/rubrics/481/view) individually and describe how I addressed each point in my implementation.  
@@ -72,13 +77,19 @@ Here is an exploratory visualization of the data set. It is a bar chart showing 
 
 #### 1. Describe how you preprocessed the image data. What techniques were chosen and why did you choose these techniques? Consider including images showing the output of each preprocessing technique. Pre-processing refers to techniques such as converting to grayscale, normalization, etc. (OPTIONAL: As described in the "Stand Out Suggestions" part of the rubric, if you generated additional data for training, describe why you decided to generate additional data, how you generated the data, and provide example images of the additional data. Then describe the characteristics of the augmented training set like number of images in the set, number of images for each class, etc.)
 
-As a first step, I changed the in put shape to (50x50). beacuse most of didn't convert the images to grayscale because graysacle image would lost color information. Most
+As a first step, I convert the images to grayscale because image need histogram equalization. Some images too dark to recognize.
 
 Here is an example of a traffic sign image before and after grayscaling.
 
 ![alt text][image2]
+![alt text][image2_gray]
 
-As a last step, I normalized the image data because ...
+As a second step. I use cv2.equalizeHist to equalize the grayscale image's histogram. This would enhanced the features. Here is an example of a traffic sign image before and after histogram equalization.
+
+![alt text][image2_gray]
+![alt text][image2_hist]
+
+As a last step, I normalized the image data because 
 
 I decided to generate additional data because ... 
 
@@ -95,30 +106,47 @@ The difference between the original data set and the augmented data set is the f
 
 My final model consisted of the following layers:
 
-| Layer                 |     Description                               | 
+|         Layer         |                   Description                 | 
 |:---------------------:|:---------------------------------------------:| 
-| Input                 | 32x32x3 RGB image                             | 
-| Convolution 3x3       | 1x1 stride, same padding, outputs 32x32x64    |
+| Input                 |          32x32x1 GRAY Scale image             | 
+| Convolution 3x3       | 5x5 kernel size, 1x1 stride, VALID padding    |
 | RELU                  |                                               |
-| Max pooling           | 2x2 stride,  outputs 16x16x64                 |
-| Convolution 3x3       | etc.                                          |
-| Fully connected       | etc.                                          |
-| Softmax               | etc.                                          |
-|                       |                                               |
-|                       |                                               |
+| Max pooling           |        2x2 stride,  VALID padding             |
+| Convolution 3x3       | 5x5 kernel size, 1x1 stride, VALID padding    |
+| RELU                  |                                               |
+| Max pooling           |        2x2 stride,  VALID padding             |
+| Fully connected       | Input 400, Output 120.                        |
+| RELU                  |                                               |
+| Fully connected       | Input 120, Output 84.                         |
+| RELU                  |                                               |
+| Fully connected       | Input 84, Output 43.                          |
+| RELU                  |                                               |
+| Softmax               | Output 43.                                    |
  
 
 
 #### 3. Describe how you trained your model. The discussion can include the type of optimizer, the batch size, number of epochs and any hyperparameters such as learning rate.
 
-To train the model, I used an ....
+To train the model, I used an batch_size=128, epochs=20, learning_rate=0.001, here is the curve.
+
+![alt text][image_epoch_20]
+
+
+Obviously. epoch is too small. so I set EPOCH=200. then i get a new result.
+
+![alt text][image_epoch_200]
+
+so. EPOCH should be greate than 100.
+
+Batch size also was a import hyperparameters. Here give a figure to show difference. learning_rate=0.001, EPOCH=200
+![alt text][image_batch_size_64_128_512]
 
 #### 4. Describe the approach taken for finding a solution and getting the validation set accuracy to be at least 0.93. Include in the discussion the results on the training, validation and test sets and where in the code these were calculated. Your approach may have been an iterative process, in which case, outline the steps you took to get to the final solution and why you chose those steps. Perhaps your solution involved an already well known implementation or architecture. In this case, discuss why you think the architecture is suitable for the current problem.
 
 My final model results were:
-* training set accuracy of ?
-* validation set accuracy of ? 
-* test set accuracy of ?
+1. training set accuracy is 0.958
+2. validation set accuracy is 0.952
+3. test set accuracy was 0.931
 
 If an iterative approach was chosen:
 * What was the first architecture that was tried and why was it chosen?

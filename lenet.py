@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 import os
 import numpy as np
@@ -12,14 +12,22 @@ import sklearn
 import tensorflow as tf
 from tensorflow.contrib.layers import flatten
 
-# 加载mnist_inference.py中定义的常量和前向传播的函数
-import gtsrb_inference
-
-# 配置神经网络的参数
 BATCH_SIZE = 500
-EPOCHS = 1
+EPOCHS = 20
 
-IMAGE_CHANNEL = 3
+data_source = 'gtsrb'  # 'gtsrb' or mnist
+
+if data_source == 'gtsrb':
+    n_classes = 43
+    IMAGE_SIZE = 32
+    IMAGE_CHANNEL = 3
+elif data_source == 'mnist':
+    n_classes = 10
+    IMAGE_SIZE = 32
+    IMAGE_CHANNEL = 1
+else:
+    print("Unsupport data source. gtsrb or mnist is supported.")
+    exit(-1)
 
 
 def LeNet(x):
@@ -58,21 +66,21 @@ def LeNet(x):
 
     fc2     = tf.nn.relu(fc2)
 
-    fc3_w   = tf.Variable(tf.truncated_normal(shape=(84, 10), mean=mu, stddev=sigma))
-    fc3_b   = tf.Variable(tf.zeros(10))
+    fc3_w   = tf.Variable(tf.truncated_normal(shape=(84, n_classes), mean=mu, stddev=sigma))
+    fc3_b   = tf.Variable(tf.zeros(n_classes))
     fc3     = tf.matmul(fc2, fc3_w) + fc3_b
 
     logits  = fc3
     return logits
 
 def load_data(source='mnist'):
-    if source == 'mnist':
+    if data_source == 'mnist':
         from tensorflow.examples.tutorials.mnist import input_data
         mnist = input_data.read_data_sets("./dataset/MNIST_data/", reshape=False)
         X_train, y_train = mnist.train.images, mnist.train.labels
         X_validation, y_validation = mnist.validation.images, mnist.validation.labels
         X_test, y_test = mnist.test.images, mnist.test.labels
-    elif source == 'gtsrb':
+    elif data_source == 'gtsrb':
         train_fn = './dataset/traffic-signs-data/train.2.p'
         with open(train_fn, 'rb') as fd:
             train_data = pickle.load(fd)
@@ -90,11 +98,26 @@ def load_data(source='mnist'):
         return None, None, None, None, None, None
     return X_train, y_train, X_validation, y_validation, X_test, y_test
 
-X_train, y_train, X_validation, y_validation, X_test, y_test = load_data('gtsrb')
+X_train, y_train, X_validation, y_validation, X_test, y_test = load_data(data_source)
+# TODO: Number of training examples
+n_train = len(X_train)
+
+# TODO: Number of validation examples
+n_validation = len(X_validation)
+
+# TODO: Number of testing examples.
+n_test = len(X_test)
+
+# TODO: What's the shape of an traffic sign image?
+image_shape = (32, 32, 3)
+
+print("Number of train samples:%d" % n_train)
+print("Number of test samples:%d" % n_test)
+print("number of validation samples:%d" % n_validation)
 
 x = tf.placeholder(tf.float32, (None, 32, 32, IMAGE_CHANNEL))
 y = tf.placeholder(tf.int32, (None))
-one_hot_y = tf.one_hot(y, 10)
+one_hot_y = tf.one_hot(y, n_classes)
 
 rate = 0.001
 
@@ -109,6 +132,12 @@ train_operation = optimizer.minimize(loss_operation)
 correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(one_hot_y, 1))
 accuracy_operation = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
+def preprocess_image(image):
+    shape = image.shape
+    image = cv2.resize(image, (32, 32))
+    image = image / 255.0
+    return image.reshape(shape)
+
 def evaluate(X_data, y_data):
     num_examples = len(X_data)
     total_accuracy = 0
@@ -118,7 +147,7 @@ def evaluate(X_data, y_data):
         n, w, h, c = batch_x.shape
         new_batch_x = np.zeros((n, 32, 32, c))
         for j in range(n):
-            new_batch_x[j] = cv2.resize(batch_x[j], (32, 32)).reshape((32, 32, c))
+            new_batch_x[j] = preprocess_image(batch_x[j])
         accuracy = sess.run(accuracy_operation, feed_dict={x:new_batch_x, y:batch_y})
         total_accuracy += (accuracy * len(batch_x))
     return total_accuracy / num_examples
@@ -139,12 +168,16 @@ with tf.Session() as sess:
             n, w, h, c = batch_x.shape
             new_batch_x = np.zeros((n, 32, 32, c))
             for j in range(n):
-                new_batch_x[j] = cv2.resize(batch_x[j], (32, 32)).reshape((32, 32, c))
+                new_batch_x[j] = preprocess_image(batch_x[j])
             sess.run(train_operation, feed_dict={x: new_batch_x, y: batch_y})
             # print("[EPOCH=%d]%d / %d" % (i, offset, num_examples))
 
         validation_accuracy = evaluate(X_validation, y_validation)
         print("Validation Accuracy = {:.3f}".format(validation_accuracy))
+
+    print("Test model...")
+    test_accuracy = evaluate(X_test, y_test)
+    print("Test Accuracy = {:.3f}".format(test_accuracy))
 
     try:
         saver
@@ -154,89 +187,3 @@ with tf.Session() as sess:
     print("Model saved")
 
 exit(0)
-
-LEARNING_RATE_BASE = 0.0001
-LEARNING_RATE_DECAY = 0.99
-REGULARAZTION_RATE = 0.0001
-MOVING_AVERAGE_DECAY = 0.99
-# 模型保存的路径和文件名
-MODEL_SAVE_PATH = "model/"
-MODEL_NAME = "model.ckpt"
-
-def train(gtsrb_items):
-    # 定义输入输出placeholder
-    # 调整输入数据placeholder的格式，输入为一个四维矩阵
-    x = tf.placeholder(tf.float32, [
-        BATCH_SIZE,                             # 第一维表示一个batch中样例的个数
-        gtsrb_inference.IMAGE_SIZE,             # 第二维和第三维表示图片的尺寸
-        gtsrb_inference.IMAGE_SIZE,
-        gtsrb_inference.NUM_CHANNELS],          # 第四维表示图片的深度，对于RBG格式的图片，深度为5
-                       name='x-input')
-    y_ = tf.placeholder(tf.float32, [None, gtsrb_inference.OUTPUT_NODE], name='y-input')
-
-    regularizer = tf.contrib.layers.l2_regularizer(REGULARAZTION_RATE)
-    # 直接使用mnist_inference.py中定义的前向传播过程
-    y = gtsrb_inference.inference(x, True, regularizer)
-    
-    global_step = tf.Variable(0, trainable=False)
-
-    #定义损失函数、学习率、滑动平均操作以及训练过程
-    variable_averages = tf.train.ExponentialMovingAverage(MOVING_AVERAGE_DECAY, global_step)
-    variable_averages_op = variable_averages.apply(tf.trainable_variables())
-    cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=y, labels=tf.argmax(y_, 1))
-    cross_entropy_mean = tf.reduce_mean(cross_entropy)
-    loss = cross_entropy_mean + tf.add_n(tf.get_collection('losses'))
-    num_examples = 30000
-    learning_rate = tf.train.exponential_decay(LEARNING_RATE_BASE, global_step, num_examples/BATCH_SIZE, LEARNING_RATE_DECAY)
-    train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss, global_step=global_step)
-    with tf.control_dependencies([train_step, variable_averages_op]):
-        train_op = tf.no_op(name='train')
-
-    # 初始化Tensorflow持久化类
-    saver = tf.train.Saver()
-    with tf.Session() as sess:
-        tf.global_variables_initializer().run()
-
-        # 验证和测试的过程将会有一个独立的程序来完成
-        for i in range(EPOCHS):
-            xs = np.zeros((BATCH_SIZE, gtsrb_inference.IMAGE_SIZE, gtsrb_inference.IMAGE_SIZE, gtsrb_inference.NUM_CHANNELS))
-            ys = np.zeros((BATCH_SIZE, gtsrb_inference.NUM_LABELS))
-            for j in range(BATCH_SIZE):
-                item = random.choice(gtsrb_items)
-                image = cv2.imread(item['image_fn'], 1)
-                x1, y1, x2, y2 = item['bbox']
-                image = image[x1:x2,y1:y2]
-                image = cv2.resize(image, (gtsrb_inference.IMAGE_SIZE, gtsrb_inference.IMAGE_SIZE))
-                image = (image - 128.0) / 256.0
-                xs[j,:,:, :] = image[:, :, :]
-                class_id = np.zeros(gtsrb_inference.NUM_LABELS)
-                class_id[item['class_id']] = 1.0
-                if not i and j < 10:
-                    print class_id, item['class_id'], item['image_fn']
-                ys[j, :] = class_id
-            # xs, ys = mnist.train.next_batch(BATCH_SIZE)
-            #类似地将输入的训练数据格式调整为一个四维矩阵，并将这个调整后的数据传入sess.run过程
-            # reshaped_xs = np.reshape(xs, (BATCH_SIZE, gtsrb_inference.IMAGE_SIZE, gtsrb_inference.IMAGE_SIZE, gtsrb_inference.NUM_CHANNELS))
-            # print xs.shape, ys.shape
-            _, loss_value, step = sess.run([train_op, loss, global_step], feed_dict={x: xs, y_: ys})
-            #每1000轮保存一次模型。
-            if (i%1000 == 0) or (i == EPOCHS-1):
-                # 输出当前的训练情况。这里只输出了模型在当前训练batch上的损失函数大小。通过损失函数的大小可以大概了解训练的情况。
-                # 在验证数据集上的正确率信息会有一个单独的程序来生成。
-                time_str = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time()))
-                print("[%s]After %d training step(s), loss on training batch is %f." % (time_str, step, loss_value))
-                # 保存当前的模型。注意这里隔出了global_step参数，这样可以让每个被保存模型的文件名末尾加上训练的轮数，比如“model.ckpt-1000”表示训练1000轮后得到的模型
-                saver.save(sess, os.path.join(MODEL_SAVE_PATH, MODEL_NAME), global_step=global_step)
-
-def main(argv=None):
-    # train length : 34799
-    # test length  : 12630
-    # valid length :  4410
-    train_fn = './dataset/valid.2.p'
-    with open(train_fn, 'rb') as fd:
-        train_data = pickle.load(fd)
-        print train_data.keys()
-        print len(train_data['labels']), len(train_data['features']), len(train_data['coords']), len(train_data['sizes'])
-
-if __name__ == '__main__':
-    tf.app.run()

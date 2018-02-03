@@ -107,6 +107,7 @@ def load_data(source='mnist'):
         return None, None, None, None, None, None
     return X_train, y_train, X_validation, y_validation, X_test, y_test
 
+
 def preprocess_image(image):
     shape = image.shape
     if len(shape) == 2:
@@ -149,9 +150,11 @@ except Exception, err:
 # for i in range(10):
 #     index = random.randint(0, len(X_train))
 #     image = X_train[index]
-#     cv2.imshow('image', image)
-#     cv2.imshow('preprocess', preprocess_image(image))
-#     cv2.waitKey(0)
+#     plt.imshow(image)
+#     plt.show()
+    # cv2.imshow('image', image)
+    # cv2.imshow('preprocess', preprocess_image(image))
+    # cv2.waitKey(0)
 # exit(0)
 # Number of training examples
 n_train = len(X_train)

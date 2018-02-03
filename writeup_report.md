@@ -1,11 +1,5 @@
 # **Traffic Sign Recognition** 
 
-## Writeup
-
-### You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
-
----
-
 **Build a Traffic Sign Recognition Project**
 
 The goals / steps of this project are the following:
@@ -31,9 +25,16 @@ The goals / steps of this project are the following:
 [image6]: ./examples/traffic_sign_2.png "Traffic Sign 3"
 [image7]: ./examples/traffic_sign_3.png "Traffic Sign 4"
 [image8]: ./examples/traffic_sign_5.png "Traffic Sign 5"
+[image9]: ./examples/traffic_sign_6.png "Traffic Sign 6"
 [image_epoch_20]: ./examples/ValidationAccuracy_20.png "Validation Accuracy EPOCH=20"
 [image_epoch_200]: ./examples/ValidationAccuracy_200.png "Validation Accuracy EPOCH=200"
 [image_batch_size_64_128_512]: ./examples/ValidationAccuracy_bs_64_128_512.png "Validation Accuracy BATCH_SIZE=[64, 128, 512]"
+[probability_top5_of_0]: ./examples/probability_top5_of_0.png "probability top5 of first image"
+[probability_top5_of_1]: ./examples/probability_top5_of_0.png "probability top5 of second image"
+[probability_top5_of_2]: ./examples/probability_top5_of_0.png "probability top5 of third image"
+[probability_top5_of_3]: ./examples/probability_top5_of_0.png "probability top5 of fourth image"
+[probability_top5_of_5]: ./examples/probability_top5_of_0.png "probability top5 of fifth image"
+[probability_top5_of_6]: ./examples/probability_top5_of_0.png "probability top5 of 6th image"
 
 ## Rubric Points
 ### Here I will consider the [rubric points](https://review.udacity.com/#!/rubrics/481/view) individually and describe how I addressed each point in my implementation.  
@@ -51,19 +52,19 @@ You're reading it! and here is a link to my [project code](https://github.com/me
 
 I used the pandas library to calculate summary statistics of the traffic signs data set:
 Number of training examples:
-n_train = 34799
+n_train = len(y_train)
 
 Number of validation examples:
-n_validation = 4410
+n_validation = len(y_validation)
 
 Number of testing examples.
-n_test = 12630
+n_test = len(y_test)
 
 The shape of an traffic sign image:
-image_shape = (32, 32, 3)
+image_shape = X_train[0].shape
 
 The number of unique classes/labels in the dataset is
-n_classes = 43
+n_classes = len(set(y_train))
 
 #### 2. Include an exploratory visualization of the dataset.
 
@@ -89,18 +90,7 @@ As a second step. I use cv2.equalizeHist to equalize the grayscale image's histo
 ![alt text][image2_gray]
 ![alt text][image2_hist]
 
-As a last step, I normalized the image data because 
-
-I decided to generate additional data because ... 
-
-To add more data to the the data set, I used the following techniques because ... 
-
-Here is an example of an original image and an augmented image:
-
-![alt text][image3]
-
-The difference between the original data set and the augmented data set is the following ... 
-
+As a last step, I normalized the image data because prevent over fitting. and could ccelerate convergence
 
 #### 2. Describe what your final model architecture looks like including model type, layers, layer sizes, connectivity, etc.) Consider including a diagram and/or table describing the final model.
 
@@ -168,9 +158,9 @@ If a well known architecture was chosen:
 Here are five German traffic signs that I found on the web:
 
 ![alt text][image4] ![alt text][image5] ![alt text][image6] 
-![alt text][image7] ![alt text][image8]
+![alt text][image7] ![alt text][image8] ![alt text][image9]
 
-The first image might be difficult to classify because ...
+The fifth image might be difficult to classify because no rotation angle in all the dataset.
 
 #### 2. Discuss the model's predictions on these new traffic signs and compare the results to predicting on the test set. At a minimum, discuss what the predictions were, the accuracy on these new predictions, and compare the accuracy to the accuracy on the test set (OPTIONAL: Discuss the results in more detail as described in the "Stand Out Suggestions" part of the rubric).
 
@@ -178,14 +168,15 @@ Here are the results of the prediction:
 
 | Image                 |     Prediction                                | 
 |:---------------------:|:---------------------------------------------:| 
-| Stop Sign             | Stop sign                                     | 
-| U-turn                | U-turn                                        |
-| Yield                 | Yield                                         |
-| 100 km/h              | Bumpy Road                                    |
-| Slippery Road         | Slippery Road                                 |
+| 20 km/h             | 50 km/h                                     | 
+| 30 km/h                | 30 km/h                                        |
+| 50 km/h                 | 50 km/h                                         |
+| 60 km/h              | 60 km/h                                    |
+| 80 km/h         | Roundabout                                 |
+| 80 km/h         | class 10                              |
 
 
-The model was able to correctly guess 4 of the 5 traffic signs, which gives an accuracy of 80%. This compares favorably to the accuracy on the test set of ...
+The model was able to correctly guess 4 of the 6 traffic signs, which gives an accuracy of 50%. So my model is over fitting in all dataset. One of solutions is add more training data.
 
 #### 3. Describe how certain the model is when predicting on each of the five new images by looking at the softmax probabilities for each prediction. Provide the top 5 softmax probabilities for each image along with the sign type of each probability. (OPTIONAL: as described in the "Stand Out Suggestions" part of the rubric, visualizations can also be provided such as bar charts)
 
@@ -193,16 +184,27 @@ The code for making predictions on my final model is located in the 11th cell of
 
 For the first image, the model is relatively sure that this is a stop sign (probability of 0.6), and the image does contain a stop sign. The top five soft max probabilities were
 
-| Probability           |     Prediction                                | 
-|:---------------------:|:---------------------------------------------:| 
-| .60                   | Stop sign                                     | 
-| .20                   | U-turn                                        |
-| .05                   | Yield                                         |
-| .04                   | Bumpy Road                                    |
-| .01                   | Slippery Road                                 |
+![alt text][probability_top5_of_0]
 
+For the second image :
 
-For the second image ... 
+![alt text][probability_top5_of_1]
+
+For the third image :
+
+![alt text][probability_top5_of_2]
+
+For the fourth image :
+
+![alt text][probability_top5_of_3]
+
+For the fifth image :
+
+![alt text][probability_top5_of_5]
+
+For the 6th image :
+
+![alt text][probability_top5_of_6]
 
 ### (Optional) Visualizing the Neural Network (See Step 4 of the Ipython notebook for more details)
 #### 1. Discuss the visual output of your trained network's feature maps. What characteristics did the neural network use to make classifications?
